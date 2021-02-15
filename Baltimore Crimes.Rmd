@@ -1,0 +1,185 @@
+---
+title: "Problem Set 3"
+author: "Nithya Vembu"
+date: "7/14/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, WARNING=FALSE, MESSAGE=FALSE)
+```
+
+```{r}
+dataset <- read.csv(file="/Users/nithyavembu/Downloads/BPD_Part_1_Victim_Based_Crime_Data.csv", header=TRUE, sep=",")
+set.seed(123)
+df <- dataset[sample(1:nrow(dataset), 2000,
+  	replace=FALSE),]
+
+install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+library(ggplot2)
+
+install.packages("dplyr", repos = "http://cran.us.r-project.org")
+library(dplyr)
+
+length(unique(df$`Total Incidents`))
+unique(df$Premise)
+```
+
+##1 
+The histogram below reveals the most prevalant types of crimes in Baltimore in the sample data. It can be noted that unlawful appriopriation of others' property in forms of auto theft, burglary, larceny, larceny from auto and various forms of robbery accounts for majority of the crimes. This is followed by assaults (aggravated and by threat).
+
+```{r}
+
+g = ggplot(df, aes(Description))
+g + geom_bar(aes(fill=Description), width = 0.6) + geom_text(stat = "count", size = 3, aes(label = ..count.., y = ..count..)) +
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(x = "Crime Description" ,y = "#Incidents", title= "Type of Crimes in Baltimore")
+
+```
+
+##2 
+Examining the types of weapons used shows that hands and firearms were the top two types. While less than a third of the crimes in the sample crime data involved weapons, the rest used no weapons or perhaps the data was missing.
+
+```{r}
+df$Weapon[df$Weapon==""] <- NA
+pie <- ggplot(df, aes(x = "", fill = factor(Weapon))) + 
+  geom_bar(width = 1) +
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5)) + 
+  labs(fill="Weapon", 
+       x=NULL, 
+       y=NULL, 
+       title="Weapons Used in Crimes in Baltimore", 
+       caption="Source: City of Baltimore")
+
+pie + coord_polar(theta = "y", start=0)
+
+```
+
+##3 
+Taking a closer look at how what kind of weapons were associated with the different descriptions of crime, reveals that the majority of most prevalant crimes had no value associated with it. If the blank values all mean "no weapon", then we are able to say that majority of the crimes do not involve weapons. However, if the blank values also mean that data was missing or the exact weapon was not known, then such a conclusion would be false. When it comes to known weapons, hands are widely used in assault, and firearms for different robberies and shooting.
+
+```{r}
+
+g <- ggplot(df, aes(Weapon))
+g + geom_bar(aes(fill=Description), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(x = "Weapon" ,y = "#Crime Type", title= "Weapons and Crime Type in Baltimore") +
+annotate("text", x = 3, y = 1000, label = "Over 2/3rd of the values are blank", size = 3)
+```
+##4 
+Next, in plotting where the crime happened (Inside vs Outside), it was seen that 'Outside' is represented by both the values "Outside" and "O". Similarly, "Inside" is represented by both "Inside" and "I". 
+
+In order to standardize the values, the "O"s were changed to "Outside", and "I"s to "Inside". The pie chart of the recoded variable, tells us that crime occurs more outside, than inside.
+
+```{r}
+df$Inside.Outside[df$Inside.Outside==""] <- NA
+df$Inside.Outside[df$Inside.Outside=="O"] <- "Outside"
+df$Inside.Outside[df$Inside.Outside=="I"] <- "Inside"
+
+pie <- ggplot(df, aes(x = "", fill = factor(Inside.Outside))) + 
+  geom_bar(width = 1) + 
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5)) + 
+  labs(fill="Inside/Outside", 
+       x=NULL, 
+       y=NULL, 
+       title="Inside vs Outside Occurance of Crime", 
+       caption="Source: City of Baltimore")
+
+pie + coord_polar(theta = "y", start=0)
+```
+
+##5
+In order to easily visualize if one or more districts are high on crime, this ranked lollipop chart was created. The mean value of the crime incidents by neighborhood was found to be 223. The top crime districts with above average number of incidents were found to be North Eastern, South Eastern, Northern and Central. 
+
+```{r}
+
+x <- df %>% group_by(df$District) %>% summarise(count = n())
+names(x) <- c("District", "Incidents")
+x <- x[order(x$Incidents), ] 
+x$District <- factor(x$District, levels = x$District)
+mean(x$Incidents)
+
+# Plot
+ggplot(x, aes(x=District, y=Incidents)) + 
+  geom_point(size=3) + 
+  geom_segment(aes(x=District, 
+                   xend=District, 
+                   y=0, 
+                   yend=Incidents)) + 
+  labs(x = "District" ,y = "#Incidents", title= "Crimes by District in Baltimore") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+```
+
+
+Before analyzing how these different factors influence one another, the CrimeDate and CrimeTime variables are examined. For this the date and time values are formatted.
+
+```{r}
+install.packages("lubridate", repos = "http://cran.us.r-project.org")
+library(lubridate)
+
+df$CrimeDate<-as.Date(df$CrimeDate,format="%m/%d/%Y")
+df$CrimeWeek<-week(df$CrimeDate)
+df$CrimeMonth <- month(df$CrimeDate)
+df$Month <- month(df$CrimeDate, label = TRUE)
+df$CrimeYear <- year(df$CrimeDate)
+df$CrimeDay <- day(df$CrimeDate)
+df$CrimeHour<- as.integer(substr(df$CrimeTime,0,2))
+```
+
+##6 
+The reformatting helps figure out whether crime has risen in the periods when this data was collected, and this is broken down by district. Majority of the districts have similar patterns for a given year. The plot below shows that in 2017, in all districts, the number of incidents has reduced. However, when taking a closer look at the data itself, we find that there is no data available after September 1st 2017. This could be the reason for this trend. Apart from that data, the overall crime has an alternating up and down pattern. If the sample is a precise representation of the whole dataset, it is worth analyzing the social, economic, etc, factors in Baltimore in the years with lower crime.
+
+```{r}
+
+df%>%group_by(df$CrimeYear)%>%tally()
+min(df$CrimeDate)
+max(df$CrimeDate)
+
+ggplot(df)+
+  aes(x=CrimeYear, color=District)+
+  geom_line(stat="count")+
+  scale_x_continuous(breaks = seq(2012,2017,1))+
+  labs(title="Incidents by Disctrict",x="District",y="#Incidents")
+
+d <- subset(df, df$CrimeYear != 2017)
+ggplot(d)+
+  aes(x=CrimeYear, color=District)+
+  geom_line(stat="count")+
+  scale_x_continuous(breaks = seq(2012,2017,1))+
+  labs(title="Incidents by Disctrict",x="District",y="#Incidents")
+```
+
+##7 
+To determine if the number of criminal incidents is high at some months of the year, the plot below was created. The first plot created had very low values for months September-December. Keeping in mind that this could be the result of unavailability of data for 2017 Sep-Dec, the data for 2017 was removed from the analysis. The resulting plot revealed that crime incidents are particularly high during the summer months of May-August. Taking a further look at the type of incidents, might reveal more clues on why this pattern exists.
+
+```{r}
+d <- subset(df, df$CrimeYear != 2017)
+x <- d %>% group_by(d$Month) %>% summarise(count = n())
+names(x) <- c("Month","Incidents")
+df$WeekDay <- wday(df$CrimeDate, label=TRUE)
+
+gg <- ggplot(x, aes(x=Month, y=Incidents)) + 
+  geom_point(aes(col=Month, size=Incidents)) + 
+  labs(subtitle="Month vs Crime", 
+       y="Incidents", 
+       x="Month", 
+       title="Scatterplot"
+    )
+
+plot(gg)
+
+```
+
+##8 
+The 2017 data was still omitted, and the distribution of the types of crimes over the different months was created. The distribution of the types of crime around the months seem uniform, with more number of incidents in the summer, and some winter months than the rest.
+
+```{r}
+g <- ggplot(d, aes(Month))
+g + geom_bar(aes(fill=Description), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(x = "Month" ,y = "#Incidents", title= "Month and Type of Crimes in Baltimore")
+```
+
