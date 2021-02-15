@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, WARNING=FALSE, MESSAGE=FALSE)
 ```
+# Crimes in Baltimore 
 
 ```{r}
 dataset <- read.csv(file="/Users/nithyavembu/Downloads/BPD_Part_1_Victim_Based_Crime_Data.csv", header=TRUE, sep=",")
