@@ -94,14 +94,15 @@ map
 4. The map below was created in an effort to find out if there are any counties that have no hospitals, explaining some of the empty regions from the maps before. For this, the list of all counties was compared against the list of counties from the hospital dataset. The counties from the all-county list that did not show in the hospital list were highlighted. The names of these counties are displayed in red in an italicized font. Most of these handful counties are located in the central parts of the state. With more data, it could be assessed as to whether or not future hospital facilities development is needed in these counties.
 
 
-```{r message=FALSE}
+```{r message=FALSE, results = "hide"}
 penn_counties <- counties("pa")
+```
+
+```{r}
 countyWithHospitals <-unique(df$county)
 countylist <- penn_counties$NAME
 countyWithNoHospitals = setdiff(countylist, countyWithHospitals)
 penn_counties_with_no_hospital <- subset(penn_counties, penn_counties$NAME %in% countyWithNoHospitals)
-
-
 
 # Map 
 map <- leaflet(penn_counties_with_no_hospital)%>%

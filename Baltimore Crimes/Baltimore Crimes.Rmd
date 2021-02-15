@@ -71,7 +71,7 @@ annotate("text", x = 3, y = 1000, label = "Over 2/3rd of the values are blank", 
 ##4 
 Next, in plotting where the crime happened (Inside vs Outside), it was seen that 'Outside' is represented by both the values "Outside" and "O". Similarly, "Inside" is represented by both "Inside" and "I". 
 
-In order to standardize the values, the "O"s were changed to "Outside", and "I"s to "Inside". The pie chart of the recoded variable, tells us that crime occurs more outside, than inside.
+In order to standardize the values, the "O"s were changed to "Outside", and "I"s to "Inside". The pie chart of the re-coded variable, tells us that crime occurs more outside, than inside.
 
 ```{r}
 df$Inside.Outside[df$Inside.Outside==""] <- NA
