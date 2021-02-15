@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, error = FAL
 
 The spatial differences in the hospital service coverage for the state of Pennsylvania was examined using the leaflet package in R. The leaflet package, along with all the other supporting packages were first loaded. The working directory was set to the folder containing the necessary data files. 
 
-```{r message=FALSE, results = "hide"}
+```{r message=FALSE, results = "hide", error=FALSE}
 # installing libraries
 install.packages("leaflet",  repos = "http://cran.rstudio.com/")
 library(leaflet)
@@ -94,7 +94,7 @@ map
 4. The map below was created in an effort to find out if there are any counties that have no hospitals, explaining some of the empty regions from the maps before. For this, the list of all counties was compared against the list of counties from the hospital dataset. The counties from the all-county list that did not show in the hospital list were highlighted. The names of these counties are displayed in red in an italicized font. Most of these handful counties are located in the central parts of the state. With more data, it could be assessed as to whether or not future hospital facilities development is needed in these counties.
 
 
-```{r}
+```{r message=FALSE}
 penn_counties <- counties("pa")
 countyWithHospitals <-unique(df$county)
 countylist <- penn_counties$NAME
