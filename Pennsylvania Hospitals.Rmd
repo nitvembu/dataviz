@@ -1,0 +1,116 @@
+---
+title: "Pennsylvania Hospitals"
+author: "Nithya Vembu"
+date: "2/14/2021"
+output: 
+  html_document:
+        keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, error = FALSE)
+```
+
+The spatial differences in the hospital service coverage for the state of Pennsylvania was examined using the leaflet package in R. The leaflet package, along with all the other supporting packages were first loaded. The working directory was set to the folder containing the necessary data files. 
+
+```{r message=FALSE, results = "hide"}
+# installing libraries
+install.packages("leaflet",  repos = "http://cran.rstudio.com/")
+library(leaflet)
+install.packages("maps",  repos = "http://cran.rstudio.com/")
+library(maps)
+install.packages("maptools",  repos = "http://cran.rstudio.com/")
+library(maptools)
+#install.packages("ggmap",  repos = "http://cran.rstudio.com/")
+library(ggmap)
+install.packages("ggplot2",  repos = "http://cran.rstudio.com/")
+library(ggplot2)
+install.packages("dplyr", repos = "http://cran.rstudio.com/")
+library(dplyr)
+#install.packages("rgdal",  repos = "http://cran.rstudio.com/")
+library(rgdal)
+#install.packages("tigris",  repos = "http://cran.rstudio.com/")
+library(tigris)
+#install.packages("raster",  repos = "http://cran.rstudio.com/")
+#library(raster)
+#install.packages("foreign", repos = "http://cran.rstudio.com/")
+library(foreign)
+install.packages("mapdata", repos = "http://cran.rstudio.com/")
+library(mapdata)
+```
+
+
+
+```{r}
+# loading dataset
+dataset <- read.dbf("/Users/nithyavembu/Downloads/pennsylv.dbf")
+df <- data.frame(dataset)
+```
+
+1. The first map highlights the hospitals with air ambulance services i.e having an air transportation service that can move patients to and from the hospitals. It can be seen that these services are present in hospitals present near known bigger cities mainly in the eastern side of the state and the south east, while there is only one hospital (as highlighted with the rectangle) with this service for the north west and upper to mid central part of the state.
+```{r}
+
+# Map 1: Hospitals with Air Ambulance Service
+airAmb <- subset(df, air_amb == "Y", select = c("county", "facility","x","y"))
+ex <- airAmb$x[airAmb$county=="Erie"]
+ey <- airAmb$y[airAmb$county=="Erie"]
+
+# load maps
+map <- leaflet()%>%
+  addTiles()%>%
+  setView(lng = -77.15, lat = 40.55 , zoom = 6)%>%
+  addMarkers(data = airAmb, lng = ~x, lat = ~y, popup = ~facility, label = ~facility) %>% addRectangles(lng1 = -79, lat1 =  41.5, lng2 = -81, lat2 = 43, fillColor = "transparent")
+map
+```
+
+2. This map depicts the hopsitals with birthing rooms. The size of the circle markers depict the difference in the number of birthing rooms among these hospitals i.e higher the number of rooms, larger the radius of the circle markers. As expected, the number of birthing rooms are larger in the hospitals located in the bigger metro cities. We can see that there are hospitals with at least one birthing room spread around most parts of the state.
+
+
+
+```{r}
+# Map 2: Number of birthing rooms
+birth <- subset(df, !is.na(birthing_r), select = c("facility","x","y","birthing_r"))
+
+# load maps
+map <- leaflet()%>%
+  addTiles()%>%
+  setView(lng = -77.15, lat = 40.55 , zoom = 6)%>%
+  addCircleMarkers(data = birth, lng = ~x, lat = ~y, radius = ~birthing_r, popup = ~facility, weight = 1.5)
+map
+```
+
+3. Trying to mark all the hospitals in the state of Pennsylvania might make the map look very cluttered. As an alternative to that, the hospital markers have been depicted in the form of clusters in the map below. The numbers tells us the how many hospitals there are in each of those clusters. Clicking on any of the clusters will expand to show the individual hosipital markers in that cluster. Again, this map also shows that the clusters containing the two main cities of Philadelphia and Pittsburg have the highest number of hospitals. There is a small part in central Pennsylvania where there does not seem to be any hospitals that fall into any cluster.
+```{r}
+# Map 3 : Cluster of hospitals
+allHospitals <- subset(df, select = c("facility","x","y"))
+# load maps
+map <- leaflet()%>%
+  addTiles()%>%
+  setView(lng = -77.15, lat = 40.55 , zoom = 6)%>%
+  addMarkers(data = allHospitals, lng = ~x, lat = ~y, clusterOptions = markerClusterOptions(), popup = ~facility)
+map
+```
+
+4. The map below was created in an effort to find out if there are any counties that have no hospitals, explaining some of the empty regions from the maps before. For this, the list of all counties was compared against the list of counties from the hospital dataset. The counties from the all-county list that did not show in the hospital list were highlighted. The names of these counties are displayed in red in an italicized font. Most of these handful counties are located in the central parts of the state. With more data, it could be assessed as to whether or not future hospital facilities development is needed in these counties.
+
+
+```{r}
+penn_counties <- counties("pa")
+countyWithHospitals <-unique(df$county)
+countylist <- penn_counties$NAME
+countyWithNoHospitals = setdiff(countylist, countyWithHospitals)
+penn_counties_with_no_hospital <- subset(penn_counties, penn_counties$NAME %in% countyWithNoHospitals)
+
+
+
+# Map 
+map <- leaflet(penn_counties_with_no_hospital)%>%
+  addTiles() %>% setView(lng = -77.15, lat = 40.55 , zoom = 6.5)%>%
+  addPolygons(fillColor = "indigo", weight = 1,  popup = ~penn_counties_with_no_hospital$NAME, label = ~penn_counties_with_no_hospital$NAME, labelOptions = labelOptions(noHide = T, textOnly = T, direction = "left",  style=list('color'='red', 'font-family'= 'serif','font-style'= 'italic')))
+
+
+map
+
+
+```
+
